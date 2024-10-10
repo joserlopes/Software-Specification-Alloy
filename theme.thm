@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view nodetheme="Martha">
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Int"/>
+   <type name="String"/>
+   <type name="univ"/>
+   <type name="seq/Int"/>
+</node>
+
+<node showlabel="no" style="Bold" color="Yellow">
+   <set name="this/Member" type="Node"/>
+</node>
+
+<node style="Solid" shape="Ellipse" color="Green" label="">
+   <type name="Node"/>
+</node>
+
+<node visible="no" showlabel="no" style="Bold" color="Blue">
+   <set name="this/Leader" type="Node"/>
+</node>
+
+</view>
+
+</alloy>

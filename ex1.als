@@ -19,39 +19,28 @@ one sig Leader in Member {
 
 // sig SentMsg, SendingMsg, PendingMsg extends Msg {}
 
-// All members must have a nxt and be the nxt of someone
+/*
+    1. Members form a singlering with each member pointing to another member or itself
+*/
+
+// 1.1 All members must have a nxt and be the nxt of someone
 fact {
     Member = nxt.Member
     &&
     Member = Member.nxt
 }
 
-// next cannot be reciprocal
+// 1.2 next cannot be reciprocal
 fact {
     no (nxt & ~nxt)
 }
 
-// All nodes of a member's must be non Members
-fact {
-
-}
-
-// Every member can be reached again through nxt
-// TODO: Change this fact to point free notation
-fact {
-    all m: Member |
-        m in (m.^nxt)
-}
-
-// Every member can reach every other one through nxt
+// 1.3 Every member can reach every other one through nxt
 // TODO: Change this fact to point free notation
 fact {
     all m1, m2: Member |
         m1 in (m2.^nxt)
 }
 
-// fun visualizeMemberQueues[]: Node -> lone Node {
-//     Member.qnxt
-// }
 
 run { #Member=3 } for 10 // cant find instance with 8 members.. why? 

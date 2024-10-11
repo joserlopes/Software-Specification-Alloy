@@ -26,6 +26,14 @@
    <set name="this/Leader" type="Node"/>
 </node>
 
+<edge visible="no">
+   <relation name="qnxt"> <type name="Node"/> <type name="Node"/> <type name="Node"/> </relation>
+</edge>
+
+<edge visible="yes">
+   <relation name="$visualizeMemberQueues"> <type name="Node"/> <type name="Node"/> </relation>
+</edge>
+
 </view>
 
 </alloy>

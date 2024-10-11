@@ -27,15 +27,8 @@ fact {
 }
 
 // next cannot be reciprocal
-// TODO: Change this fact to point free notation
 fact {
-    all m1, m2: Member |
-    m1.nxt = m2 
-    implies
-    m2.nxt != m1
-
-    // Point free notation
-    // no (nxt & ~nxt)
+    no (nxt & ~nxt)
 }
 
 // All nodes of a member's must be non Members
@@ -61,4 +54,4 @@ fact {
 //     Member.qnxt
 // }
 
-run { #Member=7 } for 10 // cant find instance with 8 members.. why? 
+run { #Member=3 } for 10 // cant find instance with 8 members.. why? 

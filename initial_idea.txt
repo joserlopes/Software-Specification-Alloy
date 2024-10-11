@@ -12,8 +12,8 @@
 2.2 The circle (Member.nxt)
 - Members can only have one target in the circle OK
 - There must be one nxt relation that ends in the Leader
-- It loops! Every member is reachable from every other member
-- No loops within the loop: Members apear only once in the circle
+- It loops! Every member is reachable from every other member OK
+- No loops within the loop: Members appear only once in the circle
 
 4. Leadership queue
 - Queue must end in the leader

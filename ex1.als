@@ -5,6 +5,7 @@ sig Member in Node {
     // qnxt: Node -> lone Node, // node -> next in queue for membership
     // outbox: set Msg // set of messages to redirect
 }
+
 one sig Leader in Member {
     // lnxt: Node -> lone Node // leader -> leader queue
 }
@@ -18,24 +19,46 @@ one sig Leader in Member {
 
 // sig SentMsg, SendingMsg, PendingMsg extends Msg {}
 
+// All members must have a nxt and be the nxt of someone
 fact {
-    Member = nxt.Member // all members must have a next
+    Member = nxt.Member
     &&
-    Member = Member.nxt // all members must have someone pointing to them
+    Member = Member.nxt
 }
 
 // next cannot be reciprocal
+// TODO: Change this fact to point free notation
 fact {
     all m1, m2: Member |
     m1.nxt = m2 
     implies
     m2.nxt != m1
+
+    // Point free notation
+    // no (nxt & ~nxt)
 }
 
-// The member can be reached again
+// All nodes of a member's must be non Members
+fact {
+
+}
+
+// Every member can be reached again through nxt
+// TODO: Change this fact to point free notation
 fact {
     all m: Member |
         m in (m.^nxt)
 }
+
+// Every member can reach every other one through nxt
+// TODO: Change this fact to point free notation
+fact {
+    all m1, m2: Member |
+        m1 in (m2.^nxt)
+}
+
+// fun visualizeMemberQueues[]: Node -> lone Node {
+//     Member.qnxt
+// }
 
 run { #Member=7 } for 10 // cant find instance with 8 members.. why? 

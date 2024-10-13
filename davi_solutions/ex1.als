@@ -6,6 +6,13 @@ sig Member in Node {
     // outbox: set Msg // set of messages to redirect
 }
 
+one sig Leader in Member {
+    lnxt: Node -> lone Node // leader -> leader queue
+}
+
+sig LQueue in Member {} // set of nodes in leader queue
+
+
 /*
     1. Forming the loop
 */
@@ -29,7 +36,7 @@ fact {
 }
 
 /*
-    1. Membership queue
+    2. Membership queue
 */
 
 // 2.1 No members in domain of Member.qnxt
@@ -73,12 +80,73 @@ fact {
         lone m: Member | n in m.qnxt.Node
 }
 
+
 fun visualizeMemberQueues[]: Node->Node {
     Member.qnxt
 }
 
+
+/*
+    3. Leadership queue
+*/
+
+
+// 3.1 LQueue has all members in Leaders queue
+fact {
+    all m: Member |
+        m in Leader.lnxt.Node
+        implies
+        m in LQueue
+}
+
+// 3.2 No non-members or leader in domain of Leader.lnxt
+fact {
+    no (((Node-Member)+Leader) & Leader.lnxt.Node)
+}
+
+// 3.3 No non-members in the codomain of Leader.lnxt
+fact {
+    no ((Node-Member) & Node.(Leader.lnxt)) 
+}
+
+// 3.4 Owner of the queue must appear once in its co-domain if the list is not empty
+fact {
+    some Leader.lnxt 
+        implies
+    (Leader in Node.(Leader.lnxt))
+}
+
+// 3.5 Each member can only queue once 
+fact {
+    all m:Member |
+        m in Leader.lnxt.Node
+        implies
+        one m & Leader.lnxt.Node
+}
+
+// 3.6 Each node is 'pointed to' only once (including owner)
+fact {
+    all m1:Member |
+        lone m2: Node | m1 in m2.(Leader.lnxt)
+}
+
+// 3.7 Each node in the queue can eventually reach the leader
+fact {
+    all m: Member |
+        m in Leader.lnxt.Node
+        implies
+        Leader in m.^(Leader.lnxt)
+}
+
+fun visualizeLeaderQueues[]: Node->Node {
+    Leader.lnxt
+}
+
 run {
-    #Member > 1
-    all m: Member | #m.qnxt.Node >= 2
-    some n: Node | n not in (Member.qnxt.Node + Member)
-} for 10
+    #Member > 3
+    #Leader > 0
+    #Leader.lnxt.Node > 1
+    some LQueue
+    some n: Node | n in (Node-Member)
+    some m: Member | m !in (Leader.lnxt.Node)
+} for 12

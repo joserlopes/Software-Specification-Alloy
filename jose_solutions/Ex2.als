@@ -20,7 +20,6 @@ abstract sig Msg {
 sig SentMsg, SendingMsg, PendingMsg extends Msg {}
 
 pred init[] {
-    // TODO: Talk about the messages
     // Only the leader is present
     one nxt
     Leader.nxt = Leader
@@ -40,6 +39,7 @@ pred init[] {
 }
 
 pred stutter[] {
+    // Nothing changes
     nxt' = nxt
     qnxt' = qnxt
     outbox' = outbox
@@ -50,6 +50,7 @@ pred stutter[] {
     rcvrs' = rcvrs
 }
 
+// m still has no Nodes in it's qnxt queue
 pred memberApplicationEmpty[m: Member, n: Node] {
     // Pre
 
@@ -57,13 +58,14 @@ pred memberApplicationEmpty[m: Member, n: Node] {
     n != m
     // n cannot be part of any queue
     n !in Node.(~(Member.qnxt))
-    // No one is poiting to m yet
+    // No one is queueing on m
     no m.qnxt
-    // n !in Member.(^nxt)
+    // n can't be part of the Member ring
+    n !in Member.(^nxt)
 
     // Post
 
-    // n gets added to the end of m's qnxt list
+    // n gets added to the end of m's qnxt queue
     // Which in this case is m itself
     qnxt' = qnxt + (m->n->m)
 
@@ -83,7 +85,7 @@ pred memberApplicationWithQnxt[m: Member, n: Node] {
     some nLast: Node | memberApplicationWithQnxtAux[m, n, nLast]
 }
 
-
+// m already has some Nodes in it's qnxt queue
 pred memberApplicationWithQnxtAux[m: Member, n: Node, nLast: Node] {
     // Pre
 
@@ -95,11 +97,12 @@ pred memberApplicationWithQnxtAux[m: Member, n: Node, nLast: Node] {
     nLast in Node.(~(m.qnxt))
     // No other node can be pointing to nLast
     no (m.qnxt).nLast
-    //n !in Member.(^nxt)
+    // n can't be part of the Member ring
+    n !in Member.(^nxt)
 
     // Post
 
-    // n gets added to the end of m's qnxt list
+    // n gets added to the end of m's qnxt queue
     qnxt' = qnxt + (m->n->nLast)
 
     // Frame
@@ -114,13 +117,15 @@ pred memberApplicationWithQnxtAux[m: Member, n: Node, nLast: Node] {
     rcvrs' = rcvrs
 }
 
+// Add n to the end of m's qnxt queue
 pred memberApplication[m: Member, n: Node] {
     memberApplicationEmpty[m, n]
     ||
     memberApplicationWithQnxt[m, n]
 }
 
-pred membermPromotionSingle[m: Member, n: Node] {
+// m only has one Node in it's qnxt queue
+pred memberPromotionSingle[m: Member, n: Node] {
     // Pre
 
     // m has exactly one node on it's qnxt queue
@@ -135,6 +140,7 @@ pred membermPromotionSingle[m: Member, n: Node] {
     // n gets inserted between m and m.nxt
     n.nxt' = m.nxt
     m.nxt' = n
+    // n is no longer in m's qnxt queue
     qnxt' = qnxt - (m->n->m)
 
     // Frame
@@ -145,10 +151,12 @@ pred membermPromotionSingle[m: Member, n: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    // Only nodes n and m change their nxt
     all n1: Node - (n + m) | n1.nxt' = n1.nxt
 }
 
-pred membermPromotionMultiple[m: Member, n: Node] {
+// m already has some Nodes in it's qnxt queue
+pred memberPromotionMultiple[m: Member, n: Node] {
     // Pre
 
     // m has someone on it's qnxt queue
@@ -165,7 +173,7 @@ pred membermPromotionMultiple[m: Member, n: Node] {
     m.nxt' = n
     // The new member is no longer part of qnxt
     qnxt' = qnxt - (m->n->m) 
-    // The next node in the qnxt queue is the new head
+    // The next node in m's qnxt queue is the new head of said queue
     qnxt' = qnxt - (m->n.~(m.qnxt)->n) 
     qnxt' = qnxt + (m->n.~(m.qnxt)->m)
 
@@ -177,26 +185,31 @@ pred membermPromotionMultiple[m: Member, n: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    // Only nodes n and m change their nxt
     all n1: Node - (n + m) | n1.nxt' = n1.nxt
 }
 
 // n is the node to be inserted on the ring coming from m's qnxt queue
 pred memberPromotion[m: Member, n: Node] {
-    membermPromotionSingle[m, n]
+    memberPromotionSingle[m, n]
     ||
-    membermPromotionMultiple[m, n]
+    memberPromotionMultiple[m, n]
 }
 
+// Leader has no Member in it's qnxt queue
 pred leaderApplicationEmpty[m: Member] {
     // Pre
 
-    // Can't be part of my own queue of leaders
+    // The Leader can't be part of it's own lnxt queue
     m != Leader
-    // 
+    // No one is queueing to become a Leader
     no Leader.lnxt
 
     // Post
+    // The head of the Leader's lnxt queue is m
     lnxt' = lnxt + (Leader->m->Leader)
+    // Add m to LQueue
+    LQueue' = LQueue + m
 
     // Frame
 
@@ -206,14 +219,15 @@ pred leaderApplicationEmpty[m: Member] {
     outbox' = outbox
     Leader' = Leader
     Member' = Member
-    LQueue' = LQueue
     rcvrs' = rcvrs
 }
 
+// Leader already has some Members in it's qnxt queue
 pred leaderApplicationWithLnxt[m: Member] {
     some mLast: Member | leaderApplicationWithLnxtAux[m, mLast]
 }
 
+// Leader already has some Members in it's qnxt queue
 pred leaderApplicationWithLnxtAux[m: Member, mLast: Member] {
     // Pre
 
@@ -229,8 +243,10 @@ pred leaderApplicationWithLnxtAux[m: Member, mLast: Member] {
 
     // Post
 
-    //
+    // m gets added to the end of Leaders's lnxt queue
     lnxt' = lnxt + (Leader->m->mLast)
+    // Add m to LQueue
+    LQueue' = LQueue + m
 
     // Frame
 
@@ -240,16 +256,17 @@ pred leaderApplicationWithLnxtAux[m: Member, mLast: Member] {
     outbox' = outbox
     Leader' = Leader
     Member' = Member
-    LQueue' = LQueue
     rcvrs' = rcvrs
 }
 
+// Add m to the end of the Leader's lnxt queue
 pred leaderApplication[m: Member] {
     leaderApplicationEmpty[m]
     ||
     leaderApplicationWithLnxt[m]
 }
 
+// Leader only has one Member in it's lnxt queue
 pred leaderPromotionSingle[m: Member] {
     // Pre
 
@@ -264,8 +281,10 @@ pred leaderPromotionSingle[m: Member] {
 
     // m is now the Leader
     Leader' = m
-    // 
+    // m is no longer in the Leader's lnxt queue
     lnxt' = lnxt - (Leader->m->Leader)
+    // Remove m from LQueue
+    LQueue' = LQueue - m
 
     // Frame
 
@@ -274,10 +293,10 @@ pred leaderPromotionSingle[m: Member] {
     qnxt' = qnxt
     outbox' = outbox
     Member' = Member
-    LQueue' = LQueue
     rcvrs' = rcvrs
 }
 
+// Leader already has some Nodes in it's lnxt queue
 pred leaderPromotionMultiple[m: Member] {
     // Pre
 
@@ -292,11 +311,14 @@ pred leaderPromotionMultiple[m: Member] {
 
     // m is now the Leader
     Leader' = m
-    // 
+    // The new leader is no longer part of lnxt
     lnxt' = lnxt - (Leader->m->Leader)
-    // The next node in the lnxt queue is the new head
+    // The next node in m's qnxt queue is the new head of said queue
+    // The next node in the leader's lnxt queue is the new head of said queue
     lnxt' = lnxt - (Leader->m.~(Leader.lnxt)->m) 
     lnxt' = lnxt + (Leader->m.~(Leader.lnxt)->Leader)
+    // Remove m from LQueue
+    LQueue' = LQueue - m
 
     // Frame
 
@@ -305,10 +327,10 @@ pred leaderPromotionMultiple[m: Member] {
     qnxt' = qnxt
     outbox' = outbox
     Member' = Member
-    LQueue' = LQueue
     rcvrs' = rcvrs
 }
 
+// m is the new Leader
 pred leaderPromotion[m: Member] {
     leaderPromotionSingle[m]
     ||
@@ -358,7 +380,14 @@ run {
     eventually (some m: Member | leaderApplication[m])
 }
 
-run {
+run trace1 {
     eventually #lnxt > 1
+    eventually #qnxt > 1
     eventually some m: Member | leaderPromotion[m]
-}
+} for 5
+
+run trace2 {
+    eventually #lnxt > 1
+    eventually #qnxt > 1
+    eventually some m: Member | leaderPromotion[m]
+} for 5

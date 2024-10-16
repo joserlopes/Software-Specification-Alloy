@@ -9,9 +9,14 @@
 
 <node>
    <type name="Int"/>
+   <type name="Msg"/>
+   <type name="PendingMsg"/>
+   <type name="SendingMsg"/>
+   <type name="SentMsg"/>
    <type name="String"/>
    <type name="univ"/>
    <type name="seq/Int"/>
+   <set name="$m" type="Node"/>
 </node>
 
 <node showlabel="no" style="Bold" color="Yellow">
@@ -22,11 +27,22 @@
    <type name="Node"/>
 </node>
 
+<node style="inherit">
+   <set name="this/LQueue" type="Node"/>
+</node>
+
 <node visible="no" showlabel="no" style="Bold" color="Blue">
    <set name="this/Leader" type="Node"/>
 </node>
 
-<edge visible="no">
+<edge style="inherit">
+   <relation name="nxt"> <type name="Node"/> <type name="Node"/> </relation>
+   <relation name="outbox"> <type name="Node"/> <type name="Msg"/> </relation>
+   <relation name="rcvrs"> <type name="Msg"/> <type name="Node"/> </relation>
+</edge>
+
+<edge style="inherit" visible="no">
+   <relation name="lnxt"> <type name="Node"/> <type name="Node"/> <type name="Node"/> </relation>
    <relation name="qnxt"> <type name="Node"/> <type name="Node"/> <type name="Node"/> </relation>
 </edge>
 

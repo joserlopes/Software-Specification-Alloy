@@ -251,14 +251,6 @@ pred leaderPromotion[] {
     )
 }
 
-// TODO: This one is going to be quite hard!!
-pred memberExit[m: Member] {
-    // Pre
-
-    // m is not the Leader
-    m !in Leader
-}
-
 pred nonMemberExitTail[m: Member, n: Node] {
     // Pre
 
@@ -289,7 +281,7 @@ pred nonMemberExitNotTail[m: Member, n: Node] {
     // Pre
 
     // m has exactly one node on it's qnxt queue
-    #m.qnxt > 1
+    one n.~(m.qnxt)
     // n has to be a member of m's qnxt queue
     n in Node.(~(m.qnxt))
     // Some other node on m'x qnxt queue must be poiting to n
@@ -298,10 +290,7 @@ pred nonMemberExitNotTail[m: Member, n: Node] {
     n !in Member.(^nxt)
 
     // Post
-    qnxt' = qnxt - (m->n->n.(m.qnxt))
-
-    qnxt' = qnxt - (m->n.~(m.qnxt)->n) 
-    qnxt' = qnxt + (m->n.~(m.qnxt)->m)
+    qnxt' = qnxt - (m->n->n.(m.qnxt)) - (m->n.~(m.qnxt)->n) + (m->n.~(m.qnxt)->m)
 
     // Frame
 
@@ -320,6 +309,40 @@ pred nonMemberExit[m: Member, n: Node] {
     nonMemberExitNotTail[m, n]
 }
 
+pred memberExitAux[m: Member, beforeM: Member] {
+    // Pre
+
+    // m is not in the LQueue
+    m !in LQueue
+    // m has no Nodes in it's lnxt queue
+    no m.lnxt
+    m = beforeM.nxt
+    // TODO: All m's messages are sent
+
+
+    // Post
+    
+    // m is no longer a Member
+    nxt' = nxt + (beforeM->m.nxt) - (m->m.nxt) - (beforeM->m)
+    Member' = Member - m
+
+    // Frame
+
+    // Everything else remains the same
+    qnxt' = qnxt
+    outbox' = outbox
+    Leader' = Leader
+    lnxt' = lnxt
+    LQueue' = LQueue
+    rcvrs' = rcvrs
+}
+
+// NOTE: This predicate can be done without the need for an auxiliary
+// one, this just makes it more explicit
+pred memberExit[m: Member] {
+    some beforeM: Member | memberExitAux[m, beforeM]
+}
+
 pred trans[] {
     stutter[]
     ||
@@ -330,6 +353,10 @@ pred trans[] {
     some m: Member | leaderApplication[m]
     ||
     leaderPromotion[]
+    ||
+    some m: Member, n: Node | nonMemberExit[m, n]
+    ||
+    some m: Member | memberExit[m]
 }
 
 pred system[] {
@@ -371,12 +398,24 @@ run memberPromotionMultiple {
     eventually (some m: Member, nFirst: Node | memberPromotionMultiple[m, nFirst])
 } for 6
 
-// run nonMemberExitAndLeaderPromotion {
-//     eventually #qnxt > 1
-//     eventually #lnxt > 1
-//     eventually some m: Member, n: Node | nonMemberExit[m, n]
-//     eventually some m: Member | leaderPromotion[m]
-// }
+run nonMemberExitAndLeaderPromotion {
+    eventually #qnxt > 1
+    eventually #lnxt > 1
+    eventually some m: Member, n: Node | nonMemberExit[m, n]
+    eventually leaderPromotion[]
+} for 7
+
+run nonMemberExit {
+    eventually some m: Member, n: Node | nonMemberExit[m, n]
+}
+
+run nonMemberExitNotTail {
+    eventually some m: Member, n: Node | nonMemberExitNotTail[m, n]
+} for 7
+
+run memberExit {
+    eventually some m: Member | memberExit[m]
+} 
 
 run leaderPromotion {
     eventually leaderPromotion[]

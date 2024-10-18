@@ -189,76 +189,67 @@ pred leaderApplication[m: Member] {
     some mLast: Member | leaderApplicationAux[m, mLast]
 }
 
-// // Leader only has one Member in it's lnxt queue
-// pred leaderPromotionSingle[m: Member] {
-//     // Pre
+// Leader only has one Member in it's lnxt queue
+pred leaderPromotionSingle[mFirst: Member] {
+    // Pre
 
-//     // m has exactly one node on it's qnxt queue
-//     one Leader.lnxt
-//     // n is the first node on m's qnxt queue
-//     m = Leader.~(Leader.lnxt)
-//     // No messages on sending state
-//     no SendingMsg
+    // LQueue has exactly one Member
+    one LQueue
+    // TODO: Is this necessary??
+    // mFirst is the first node on LQueue
+    mFirst = Leader.~(Leader.lnxt)
 
-//     // Post
+    no SendingMsg
+    no PendingMsg
 
-//     // m is now the Leader
-//     Leader' = m
-//     // m is no longer in the Leader's lnxt queue
-//     lnxt' = lnxt - (Leader->m->Leader)
-//     // Remove m from LQueue
-//     LQueue' = LQueue - m
+    // Post
+    // mFirst is now the Leader
+    Leader' = /*Leader*/ mFirst
+    // mFirst is no longer part of LQueue
+    lnxt' = lnxt - (Leader->mFirst->Leader)
+    // Remove m from LQueue
+    LQueue' = LQueue - mFirst
 
-//     // Frame
+    // Evetything else remains the same
+    nxt' = nxt
+    qnxt' = qnxt
+    outbox' = outbox
+    Member' = Member
+    rcvrs' = rcvrs
+}
 
-//     // Evetything else remains the same
-//     nxt' = nxt
-//     qnxt' = qnxt
-//     outbox' = outbox
-//     Member' = Member
-//     rcvrs' = rcvrs
-// }
+pred leaderPromotionMultiple[mFirst: Member] {
+    // Pre
 
-// // Leader already has some Nodes in it's lnxt queue
-// pred leaderPromotionMultiple[m: Member] {
-//     // Pre
+    one mFirst.~(Leader.lnxt)
 
-//     // m has exactly one node on it's qnxt queue
-//     #lnxt > 1
-//     // n is the first node on m's qnxt queue
-//     m = Leader.~(Leader.lnxt)
-//     // No messages on sending state
-//     no SendingMsg
+    mFirst = Leader.~(Leader.lnxt)
 
-//     // Post
+    no SendingMsg
+    no PendingMsg
 
-//     // m is now the Leader
-//     Leader' = m
-//     // The new leader is no longer part of lnxt
-//     lnxt' = lnxt - (Leader->m->Leader)
-//     // The next node in m's qnxt queue is the new head of said queue
-//     // The next node in the leader's lnxt queue is the new head of said queue
-//     lnxt' = lnxt - (Leader->m.~(Leader.lnxt)->m) 
-//     lnxt' = lnxt + (Leader->m.~(Leader.lnxt)->Leader)
-//     // Remove m from LQueue
-//     LQueue' = LQueue - m
+    // Post
 
-//     // Frame
+    lnxt' = lnxt - (Leader->mFirst->Leader) - (Leader->mFirst.~(Leader.lnxt)->mFirst) + (mFirst->mFirst.~(Leader.lnxt)->mFirst)
+    Leader' = mFirst
+    LQueue' = LQueue - mFirst
 
-//     // Evetything else remains the same
-//     nxt' = nxt
-//     qnxt' = qnxt
-//     outbox' = outbox
-//     Member' = Member
-//     rcvrs' = rcvrs
-// }
+    // Frame
+    nxt' = nxt
+    qnxt' = qnxt
+    outbox' = outbox
+    Member' = Member
+    rcvrs' = rcvrs
+}
 
-// // m is the new Leader
-// pred leaderPromotion[m: Member] {
-//     leaderPromotionSingle[m]
-//     ||
-//     leaderPromotionMultiple[m]
-// }
+// m is the new Leader
+pred leaderPromotion[] {
+    some mFirst: Member | (
+        leaderPromotionSingle[mFirst]
+        ||
+        leaderPromotionMultiple[mFirst]
+    )
+}
 
 // TODO: This one is going to be quite hard!!
 pred memberExit[m: Member] {
@@ -337,6 +328,8 @@ pred trans[] {
     some m: Member | memberPromotion[m]
     ||
     some m: Member | leaderApplication[m]
+    ||
+    leaderPromotion[]
 }
 
 pred system[] {
@@ -384,6 +377,14 @@ run memberPromotionMultiple {
 //     eventually some m: Member, n: Node | nonMemberExit[m, n]
 //     eventually some m: Member | leaderPromotion[m]
 // }
+
+run leaderPromotion {
+    eventually leaderPromotion[]
+}
+
+run leaderPromotionMultiple {
+    eventually some mFirst: Member | leaderPromotionMultiple[mFirst]
+}
 
 run leaderApplication {
     eventually #LQueue > 2

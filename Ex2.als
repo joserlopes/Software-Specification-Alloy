@@ -430,14 +430,17 @@ run leaderApplication {
     // eventually (some m: Member | leaderApplication[m])
 } for 6 but 5 Node
 
-// run trace1 {
-//     eventually #lnxt > 1
-//     eventually #qnxt > 1
-//     eventually some m: Member | leaderPromotion[m]
-// } for 5
+run trace1 {
+    eventually #lnxt > 1
+    eventually #qnxt > 1
+    eventually leaderPromotion[]
+    eventually some m: Member | memberPromotion[m]
+    eventually some m: Member | memberExit[m]
+    eventually some m: Member, n: Node | nonMemberExit[m, n]
+} for 8 but 6 Node
 
-// run trace2 {
-//     eventually #lnxt > 1
-//     eventually #qnxt > 1
-//     eventually some m: Member | leaderPromotion[m]
-// } for 5
+run trace2 {
+    eventually #lnxt > 1
+    eventually #qnxt > 1
+    eventually leaderPromotion[]
+} for 7

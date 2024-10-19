@@ -1,3 +1,5 @@
+module Ex2
+
 sig Node {
   var outbox: set Msg
 }
@@ -20,6 +22,15 @@ sig Msg {
 
 var sig SentMsg, SendingMsg, PendingMsg in Msg {}
 
+fact {
+    // All messages are in some of the three states
+    always Msg = SentMsg + SendingMsg + PendingMsg
+    // No Message can be in two different states
+    always no (SentMsg & (SendingMsg + PendingMsg))
+    always no (SendingMsg & (SentMsg + PendingMsg))
+    always no (PendingMsg & (SentMsg + SendingMsg))
+}
+
 pred init[] {
     // Only the leader is present
     one nxt
@@ -30,7 +41,8 @@ pred init[] {
     // All messages are in the _pending_ state
     no SentMsg
     no SendingMsg
-    no sndr
+    // no sndr
+    // No message has been sent already, so no receivers
     no rcvrs
     // No node is queueing to become a member
     no qnxt
@@ -38,6 +50,9 @@ pred init[] {
     // Memebers are only the nodes that belong to the ring
     all m: Member |
         m.(^nxt) = Member
+    
+    // // TODO: Ask if this is necessary
+    // all n1, n2: Node | n1.outbox != n2.outbox
 }
 
 pred stutter[] {
@@ -49,6 +64,23 @@ pred stutter[] {
     Member' = Member
     lnxt' = lnxt
     LQueue' = LQueue
+    rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
+}
+
+pred stutterRing[] {
+    nxt' = nxt
+    qnxt' = qnxt
+    Leader' = Leader
+    Member' = Member
+    lnxt' = lnxt
+    LQueue' = LQueue
+}
+
+pred stutterMessages[] {
+    outbox' = outbox
     rcvrs' = rcvrs
     SentMsg' = SentMsg
     SendingMsg' = SendingMsg
@@ -84,6 +116,9 @@ pred memberApplicationAux[m: Member, n: Node, nLast: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 pred memberApplication[m: Member, n: Node] {
@@ -115,6 +150,9 @@ pred memberPromotionSingle[m: Member, nFirst: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 // m already has some Nodes in it's qnxt queue
@@ -145,6 +183,9 @@ pred memberPromotionMultiple[m: Member, nFirst: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 // n is the node to be inserted on the ring coming from m's qnxt queue
@@ -183,6 +224,9 @@ pred leaderApplicationAux[m: Member, mLast: Member] {
     Leader' = Leader
     Member' = Member
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 pred leaderApplication[m: Member] {
@@ -198,9 +242,9 @@ pred leaderPromotionSingle[mFirst: Member] {
     // TODO: Is this necessary??
     // mFirst is the first node on LQueue
     mFirst = Leader.~(Leader.lnxt)
-
-    no SendingMsg
-    no PendingMsg
+    // All messages have been sent
+    no SendingMsg & Leader.outbox
+    no PendingMsg & Leader.outbox
 
     // Post
     // mFirst is now the Leader
@@ -216,6 +260,9 @@ pred leaderPromotionSingle[mFirst: Member] {
     outbox' = outbox
     Member' = Member
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 pred leaderPromotionMultiple[mFirst: Member] {
@@ -225,8 +272,9 @@ pred leaderPromotionMultiple[mFirst: Member] {
 
     mFirst = Leader.~(Leader.lnxt)
 
-    no SendingMsg
-    no PendingMsg
+    // All messages have been sent
+    no SendingMsg & Leader.outbox
+    no PendingMsg & Leader.outbox
 
     // Post
 
@@ -240,6 +288,9 @@ pred leaderPromotionMultiple[mFirst: Member] {
     outbox' = outbox
     Member' = Member
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 // m is the new Leader
@@ -275,6 +326,9 @@ pred nonMemberExitTail[m: Member, n: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 pred nonMemberExitNotTail[m: Member, n: Node] {
@@ -301,6 +355,9 @@ pred nonMemberExitNotTail[m: Member, n: Node] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 pred nonMemberExit[m: Member, n: Node] {
@@ -335,12 +392,107 @@ pred memberExitAux[m: Member, beforeM: Member] {
     lnxt' = lnxt
     LQueue' = LQueue
     rcvrs' = rcvrs
+    SentMsg' = SentMsg
+    SendingMsg' = SendingMsg
+    PendingMsg' = PendingMsg
 }
 
 // NOTE: This predicate can be done without the need for an auxiliary
 // one, this just makes it more explicit
 pred memberExit[m: Member] {
     some beforeM: Member | memberExitAux[m, beforeM]
+}
+
+pred broadcastInitialisation[msg: PendingMsg] {
+    // Pre
+
+    // Only the Leader can initialize the broadcast
+    msg.sndr = Leader
+    // Broadcast for this message hasn't yet started
+    // msg in PendingMsg
+    // Can only send messages from the outbox
+    msg in Leader.outbox
+    // Leader can't send a message to itself
+    Leader.nxt != Leader
+    
+    // Post
+
+    // Message is now Sending state
+    PendingMsg' = PendingMsg - msg
+    SendingMsg' = SendingMsg + msg
+    // Swap outboxes
+    outbox' = outbox - (Leader->msg) + (Leader.nxt->msg)
+    // The next node has received the message
+    rcvrs' = rcvrs + (msg->Leader.nxt)
+
+    // Frame
+    nxt' = nxt
+    qnxt' = qnxt
+    Leader' = Leader
+    Member' = Member
+    lnxt' = lnxt
+    LQueue' = LQueue
+    SentMsg' = SentMsg
+}
+
+// Does the message need to be an argument of this predicate?
+pred messageRedirect[m: Member, msg: SendingMsg] {
+    // Pre
+
+    // m is not the Leader
+    m != Leader
+    // m.(~nxt) != Leader
+    // msg is in the outbox of the queue before m
+    msg in m.outbox
+    // Can only redirect messages sent from the Leader
+    msg.sndr = Leader
+
+    // Post
+
+    // outbox' = outbox - (m.(~nxt)->msg) + (m.nxt->msg)
+    outbox' = outbox - (m->msg) + (m.nxt->msg)
+    // rcvrs' = rcvrs + (msg->m) + (msg->m.nxt)
+    rcvrs' = rcvrs + (msg->m.nxt)
+
+    // Frame
+    nxt' = nxt
+    qnxt' = qnxt
+    Leader' = Leader
+    Member' = Member
+    lnxt' = lnxt
+    LQueue' = LQueue
+    PendingMsg' = PendingMsg
+    SendingMsg' = SendingMsg
+    SentMsg' = SentMsg
+}
+
+pred broadcastTermination[msg: SendingMsg] {
+    // Pre
+
+    // Leader has to have received the message
+    Leader in msg.rcvrs
+    msg.sndr = Leader
+    // There was a point in which the message wasn't in the Leader's outbox
+    // Is this needed, sice we are talking about a message in the Sendig state?
+    once msg !in Leader.outbox
+    msg in Leader.outbox
+
+    // Post
+
+    SentMsg' = SentMsg + msg
+    SendingMsg' = SendingMsg - msg
+    // Message leaves the Leader's outbox
+    outbox' = outbox - (Leader->msg)
+
+    // Frame
+    nxt' = nxt
+    qnxt' = qnxt
+    Leader' = Leader
+    Member' = Member
+    lnxt' = lnxt
+    LQueue' = LQueue
+    rcvrs' = rcvrs
+    PendingMsg' = PendingMsg
 }
 
 pred trans[] {
@@ -357,6 +509,12 @@ pred trans[] {
     some m: Member, n: Node | nonMemberExit[m, n]
     ||
     some m: Member | memberExit[m]
+    ||
+    some msg: PendingMsg | broadcastInitialisation[msg]
+    ||
+    some m: Member, msg: SendingMsg | messageRedirect[m, msg]
+    ||
+    some msg: SendingMsg | broadcastTermination[msg]
 }
 
 pred system[] {
@@ -373,13 +531,17 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
-fun Teste[]: Node {
+fun First[]: Node {
     Member.~(Member.qnxt)
 }
 
 fact {
     system[]
 }
+
+run {
+	eventually (#qnxt > 1)
+} for 7
 
 run {
     eventually (#qnxt > 3)
@@ -430,14 +592,29 @@ run leaderApplication {
     // eventually (some m: Member | leaderApplication[m])
 } for 6 but 5 Node
 
+run broadcastInitialisation {
+    eventually some msg: PendingMsg | broadcastInitialisation[msg]
+}
+
+run messageRedirect {
+    eventually some m: Member, msg: SendingMsg | messageRedirect[m, msg]
+}
+
+run broadcastTermination1 {
+    (eventually some SentMsg && (after eventually #nxt > 2))
+}
+
+run broadcastTermination2 {
+    eventually (leaderPromotion[] && some SentMsg)
+}
+
 run trace1 {
-    eventually #lnxt > 1
-    eventually #qnxt > 1
     eventually leaderPromotion[]
     eventually some m: Member | memberPromotion[m]
     eventually some m: Member | memberExit[m]
     eventually some m: Member, n: Node | nonMemberExit[m, n]
-} for 8 but 6 Node
+    eventually some SentMsg
+} for 8 but exactly 6 Node
 
 run trace2 {
     eventually #lnxt > 1

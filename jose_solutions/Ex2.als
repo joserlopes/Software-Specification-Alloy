@@ -42,14 +42,14 @@ pred init[] {
     no SentMsg
     no SendingMsg
     // no sndr
-    // No message has been sent already, so no receivers
+    // No message has been sent yet, so no receivers
     no rcvrs
     // No node is queueing to become a member
     no qnxt
 
     // Memebers are only the nodes that belong to the ring
-    all m: Member |
-        m.(^nxt) = Member
+    // all m: Member |
+    //     m.(^nxt) = Member
     
     // // TODO: Ask if this is necessary
     // all n1, n2: Node | n1.outbox != n2.outbox
@@ -609,15 +609,29 @@ run broadcastTermination2 {
 }
 
 run trace1 {
+    eventually #Member > 2
     eventually leaderPromotion[]
-    eventually some m: Member | memberPromotion[m]
+    // eventually some m: Member | memberPromotion[m]
     eventually some m: Member | memberExit[m]
     eventually some m: Member, n: Node | nonMemberExit[m, n]
     eventually some SentMsg
-} for 8 but exactly 6 Node
+} for 5 Node, 3 Msg
 
 run trace2 {
     eventually #lnxt > 1
     eventually #qnxt > 1
     eventually leaderPromotion[]
-} for 7
+}
+
+run teste1 {
+    // eventually #Member > 2
+    #Node > 4
+    eventually leaderPromotion[]
+    eventually some m: Member | memberExit[m]
+    eventually some m: Member, n: Node | nonMemberExit[m, n]
+    eventually some SentMsg
+} for 5
+
+run teste2 {
+    eventually #Member > 4
+} for 2 Msg, 5 Node, 18 steps

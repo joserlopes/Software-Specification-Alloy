@@ -80,7 +80,6 @@ pred allBroadcastsTerminate[] {
 
 pred noExits[] {
     all m: Member, n: Node | nonMemberExit[m, n]
-    &&
     all m: Member | memberExit[m]
 }
 

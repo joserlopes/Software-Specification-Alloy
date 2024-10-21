@@ -12,8 +12,14 @@
    <type name="String"/>
    <type name="univ"/>
    <type name="seq/Int"/>
-   <set name="this/PendingMsg" type="Msg"/>
    <set name="this/SendingMsg" type="Msg"/>
+</node>
+
+<node color="Gray">
+   <set name="this/PendingMsg" type="Msg"/>
+</node>
+
+<node color="Green">
    <set name="this/SentMsg" type="Msg"/>
 </node>
 
@@ -36,10 +42,6 @@
 <node visible="no" showlabel="no">
    <set name="$First" type="Node"/>
    <set name="$leaderPromotion_mFirst" type="Node"/>
-   <set name="$memberExit_beforeM" type="Node"/>
-   <set name="$teste1_m" type="Node"/>
-   <set name="$teste1_m&apos;" type="Node"/>
-   <set name="$teste1_n" type="Node"/>
 </node>
 
 <node visible="no" showlabel="no" style="Bold" color="Blue">

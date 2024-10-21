@@ -75,7 +75,7 @@ pred fairness[] {
 pred allBroadcastsTerminate[] {
     Msg = SentMsg
     // all msg: Msg |
-    //     once msg in SendingMsg implies eventually msg in SentMsg
+    //	once msg in SendingMsg implies eventually msg in SentMsg
 }
 
 pred noExits[] {
@@ -91,10 +91,18 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
+run {
+    fairness[] && #Node > 1
+}
+
+run {
+    fairness[] && noExits[] && #Node > 1
+} for 14 steps
+
 check weakFairness {
-    (fairness[] && #Node > 1) implies (allBroadcastsTerminate[])
+    (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])
 }
 
 check strongFairness {
-    (fairness[] && noExits[] && #Node > 1) implies (allBroadcastsTerminate[])
+    (fairness[] && noExits[] && #Node > 1) implies (eventually allBroadcastsTerminate[])
 }

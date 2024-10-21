@@ -46,10 +46,11 @@ pred init[] {
     no rcvrs
     // No node is queueing to become a member
     no qnxt
+    // The outbox of each node contains it's own messages
 
     // Memebers are only the nodes that belong to the ring
-    // all m: Member |
-    //     m.(^nxt) = Member
+    all m: Member |
+        m.(^nxt) = Member
     
     // // TODO: Ask if this is necessary
     // all n1, n2: Node | n1.outbox != n2.outbox
@@ -466,23 +467,21 @@ pred messageRedirect[m: Member, msg: SendingMsg] {
     SentMsg' = SentMsg
 }
 
-pred broadcastTermination[msg: SendingMsg] {
+pred broadcastTerminationAux[msg: SendingMsg, mLast: Member] {
     // Pre
 
-    // Leader has to have received the message
-    Leader in msg.rcvrs
+    // Leader has to be the sender of the message
     msg.sndr = Leader
-    // There was a point in which the message wasn't in the Leader's outbox
-    // Is this needed, sice we are talking about a message in the Sendig state?
-    once msg !in Leader.outbox
-    msg in Leader.outbox
+    // mLast is the Member before Leader
+    mLast = Leader.(~nxt)
+    msg in mLast.outbox
 
     // Post
 
     SentMsg' = SentMsg + msg
     SendingMsg' = SendingMsg - msg
     // Message leaves the Leader's outbox
-    outbox' = outbox - (Leader->msg)
+    outbox' = outbox - (mLast->msg)
 
     // Frame
     nxt' = nxt
@@ -493,6 +492,10 @@ pred broadcastTermination[msg: SendingMsg] {
     LQueue' = LQueue
     rcvrs' = rcvrs
     PendingMsg' = PendingMsg
+}
+
+pred broadcastTermination[msg: SendingMsg] {
+    some mLast: Member | broadcastTerminationAux[msg, mLast]
 }
 
 pred trans[] {
@@ -548,7 +551,6 @@ run {
 } for 7
 
 run memberPromotion {
-    eventually (#qnxt > 2)
     eventually (#Member > 2)
 } for 5
 
@@ -601,7 +603,7 @@ run messageRedirect {
 }
 
 run broadcastTermination1 {
-    (eventually some SentMsg && (after eventually #nxt > 2))
+    (eventually some SentMsg)
 }
 
 run broadcastTermination2 {

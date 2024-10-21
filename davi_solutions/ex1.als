@@ -154,10 +154,10 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
-
 /*
-    4. Message status consistency
+    4. Message consistency
 */ 
+
 
 // 4.0 redundant: no messages without status
 fact {
@@ -170,6 +170,28 @@ fact {
 // 4.1 Sent, Sending and Pending are disjoint
 fact {
     disj[SentMsg, SendingMsg, PendingMsg]
+}
+
+
+/*
+    4. Pending messages
+*/ 
+
+// 4.7 Pending messages are in its sender's outbox
+// i.e. outbox contains own node's pending messages
+
+fact {
+    all n: Node, msg: PendingMsg |
+        msg in n.outbox 
+        <=>
+        msg.sndr = n
+}
+
+// 4.11 Pending messages have no receivers
+fact {
+    some PendingMsg
+    implies 
+    no PendingMsg.rcvrs
 }
 
 // 4.2 There can be one or zero sending message at a time
@@ -195,24 +217,14 @@ fact {
 fact {
     some SendingMsg
     implies
-    SendingMsg in Node.outbox
-}
-
-// 4.6 Outbox contains no sent messages
-fact {
-    no Node.outbox & SentMsg
-}
-
-// 4.7 Outbox contains all pending messages of the current node
-fact {
-    all n: Node |
-        (sndr.n & PendingMsg) in n.outbox
+    one n: Node |
+        SendingMsg in n.outbox
 }
 
 // 4.8 If node has a Sending message in its outbox, node is a member
 fact {
     all n: Node |
-        some (n.outbox & SendingMsg)
+        SendingMsg in n.outbox
         implies
         n in Member
 }
@@ -220,21 +232,14 @@ fact {
 // 4.9 If node has a Sending message in its outbox, it is in the receivers of the message
 fact {
     all n: Node |
-        some (n.outbox & SendingMsg)
+        SendingMsg in n.outbox
         implies
         n in (n.outbox).rcvrs
 }
 
-// 4.10 Nodes cannot receive their own message (which means that leaders don't receive their own message)
+// 4.6 Outbox contains no sent messages
 fact {
-    no Msg.rcvrs & Msg.sndr
-}
-
-// 4.11 Pending messages have no receivers
-fact {
-    some PendingMsg
-    implies 
-    no PendingMsg.rcvrs
+    no Node.outbox & SentMsg
 }
 
 // 4.12 Sent messages have receivers
@@ -244,12 +249,11 @@ fact {
     some SentMsg.rcvrs
 }
 
-run {
-    #Member > 3
-    #lnxt > 1
-    #qnxt > 1
-    #Leader.lnxt.Node > 1
-    some SendingMsg
-    some PendingMsg
-    some SentMsg
-} for 12
+// 4.10 Nodes cannot receive their own message (which means that leaders don't receive their own message)
+fact {
+    no Msg.rcvrs & Msg.sndr
+}
+
+run atLeastFiveNodes {
+    #Node >= 5
+} for 5

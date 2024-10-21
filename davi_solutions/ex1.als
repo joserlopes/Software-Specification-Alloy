@@ -254,6 +254,20 @@ fact {
     no Msg.rcvrs & Msg.sndr
 }
 
-run atLeastFiveNodes {
+run network1 {
     #Node >= 5
+    #LQueue > 1
+    #qnxt > 1
+    some SendingMsg
+    some PendingMsg
+    some SentMsg
 } for 5
+
+run network2 {
+    #Node >= 5
+    #Leader.lnxt > 1
+    #{ m: Member | #m.qnxt > 1  } >= 2
+    some PendingMsg
+    some SendingMsg
+    some SentMsg
+} for 8

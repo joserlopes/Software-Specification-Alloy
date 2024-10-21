@@ -43,68 +43,89 @@ fact {
 }
 
 /*
-    4. Message status consistency
+    Message status consistency
 */ 
 
-
-
-// 4.1 Sent, Sending and Pending are disjoint
+// Sent, Sending and Pending are disjoint
 fact {
     disj[SentMsg, SendingMsg, PendingMsg]
 }
 
-
-// 4.2 There can be one or zero sending message at a time
+// There can be one or zero sending message at a time
 fact {
     lone SendingMsg
 }
 
-// 4.3 Sending messages have the current Leader as the sender
+// Sending messages have the current Leader as the sender
 fact {
+    some SendingMsg
+    implies
     SendingMsg.sndr = Leader
 }
 
 // Sending Messages need to have at least some receiver
 fact {
+    some SendingMsg
+    implies
     some SendingMsg.rcvrs
 }
 
 // Sending Messages need to be in one member's outbox
-// TODO
+fact {
+    some SendingMsg
+    implies
+    SendingMsg in Node.outbox
+}
 
-// 4.4 Outbox contains no sent messages
+// Outbox contains no sent messages
 fact {
     no Node.outbox & SentMsg
 }
 
-// 4.5 Outbox contains all pending messages of the current node
+// Outbox contains all pending messages of the current node
 fact {
     all n: Node |
         (sndr.n & PendingMsg) in n.outbox
 }
-// 4.6 Outbox may contain the Sending message of the leader. (is it implied?)
-// todo? or implied?
 
-// 4.7 If node has a Sending message in its outbox, node is a member
-// and it is in the receivers of the message
+// If node has a Sending message in its outbox, node is a member
 fact {
     all n: Node |
         some (n.outbox & SendingMsg)
         implies
         n in Member
-        &&
-        n in n.outbox.rcvrs
 }
 
-// 4.8 Nodes cannot receive their own message
-// thus, leaders don't receive their own message
+// If node has a Sending message in its outbox
+// it is in the receivers of the message
+fact {
+    all n: Node |
+        some (n.outbox & SendingMsg)
+        implies
+        n in (n.outbox).rcvrs
+}
+
+// Nodes cannot receive their own message
+// (which means that leaders don't receive their own message)
 fact {
     no Msg.rcvrs & Msg.sndr
 }
 
+// Pending messages have no receivers
+fact {
+    some PendingMsg
+    implies 
+    no PendingMsg.rcvrs
+}
+
+// Sent messages have receivers
+fact {
+    some SentMsg
+    implies
+    some SentMsg.rcvrs
+}
 
 
-// 
 run {
     #Member > 3
     #Leader > 0

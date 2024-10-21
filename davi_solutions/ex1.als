@@ -1,9 +1,10 @@
-sig Node {}
+sig Node {
+    outbox: set Msg // set of messages to redirect
+}
 
 sig Member in Node {
-    nxt: lone Member, // next member
+    nxt: one Member, // next member
     qnxt: Node -> lone Node, // node -> next in queue for membership
-    // outbox: set Msg // set of messages to redirect
 }
 
 one sig Leader in Member {
@@ -12,6 +13,12 @@ one sig Leader in Member {
 
 sig LQueue in Member {} // set of nodes in leader queue
 
+abstract sig Msg {
+    sndr: Node, // Sender node
+    rcvrs: set Node // Nodes messages was delivered
+}
+
+sig SentMsg, SendingMsg, PendingMsg in Msg {}
 
 /*
     1. Forming the loop
@@ -59,13 +66,13 @@ fact {
         n !in (n.^(m.qnxt))
 }
 
-// 2.3 Each node is 'pointed to' only once (including owner)
+// 2.4 Each node is 'pointed to' only once (including owner)
 fact {
     all m:Member, n1:Node |
         lone n2: Node | n1 in n2.(m.qnxt)
 }
 
-// 2.4 Each node in the queue can eventually reach the owner
+// 2.5 Each node in the queue can eventually reach the owner
 fact {
     all m: Member |
         all n: Node |
@@ -74,7 +81,7 @@ fact {
             m in n.^(m.qnxt)
 }
 
-// 2.5 Non-member nodes can only appear in the queue of one member
+// 2.6 Non-member nodes can only appear in the queue of one member
 fact {
     all n: Node - Member |
         lone m: Member | n in m.qnxt.Node
@@ -99,24 +106,29 @@ fact {
         m in LQueue
 }
 
-// 3.2 No non-members or leader in domain of Leader.lnxt
+// 3.2 Leader is not in LQueue
+fact {
+    Leader !in LQueue
+}
+
+// 3.3 No non-members or leader in domain of Leader.lnxt
 fact {
     no (((Node-Member)+Leader) & Leader.lnxt.Node)
 }
 
-// 3.3 No non-members in the codomain of Leader.lnxt
+// 3.4 No non-members in the codomain of Leader.lnxt
 fact {
     no ((Node-Member) & Node.(Leader.lnxt)) 
 }
 
-// 3.4 Owner of the queue must appear once in its co-domain if the list is not empty
+// 3.5 Owner of the queue must appear once in its co-domain if the list is not empty
 fact {
     some Leader.lnxt 
         implies
     (Leader in Node.(Leader.lnxt))
 }
 
-// 3.5 Each member can only queue once 
+// 3.6 Each member can only queue once 
 fact {
     all m:Member |
         m in Leader.lnxt.Node
@@ -124,13 +136,13 @@ fact {
         one m & Leader.lnxt.Node
 }
 
-// 3.6 Each node is 'pointed to' only once (including owner)
+// 3.7 Each node is 'pointed to' only once (including owner)
 fact {
     all m1:Member |
         lone m2: Node | m1 in m2.(Leader.lnxt)
 }
 
-// 3.7 Each node in the queue can eventually reach the leader
+// 3.8 Each node in the queue can eventually reach the leader
 fact {
     all m: Member |
         m in Leader.lnxt.Node
@@ -142,11 +154,102 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
+
+/*
+    4. Message status consistency
+*/ 
+
+// 4.0 redundant: no messages without status
+fact {
+    all m:Msg |
+    m in SentMsg 
+    || m in SendingMsg
+    || m in PendingMsg
+}
+
+// 4.1 Sent, Sending and Pending are disjoint
+fact {
+    disj[SentMsg, SendingMsg, PendingMsg]
+}
+
+// 4.2 There can be one or zero sending message at a time
+fact {
+    lone SendingMsg
+}
+
+// 4.3 Sending messages have the current Leader as the sender
+fact {
+    some SendingMsg
+    implies
+    SendingMsg.sndr = Leader
+}
+
+// 4.4 Sending Messages need to have at least some receiver
+fact {
+    some SendingMsg
+    implies
+    some SendingMsg.rcvrs
+}
+
+// 4.5 Sending Messages need to be in one member's outbox
+fact {
+    some SendingMsg
+    implies
+    SendingMsg in Node.outbox
+}
+
+// 4.6 Outbox contains no sent messages
+fact {
+    no Node.outbox & SentMsg
+}
+
+// 4.7 Outbox contains all pending messages of the current node
+fact {
+    all n: Node |
+        (sndr.n & PendingMsg) in n.outbox
+}
+
+// 4.8 If node has a Sending message in its outbox, node is a member
+fact {
+    all n: Node |
+        some (n.outbox & SendingMsg)
+        implies
+        n in Member
+}
+
+// 4.9 If node has a Sending message in its outbox, it is in the receivers of the message
+fact {
+    all n: Node |
+        some (n.outbox & SendingMsg)
+        implies
+        n in (n.outbox).rcvrs
+}
+
+// 4.10 Nodes cannot receive their own message (which means that leaders don't receive their own message)
+fact {
+    no Msg.rcvrs & Msg.sndr
+}
+
+// 4.11 Pending messages have no receivers
+fact {
+    some PendingMsg
+    implies 
+    no PendingMsg.rcvrs
+}
+
+// 4.12 Sent messages have receivers
+fact {
+    some SentMsg
+    implies
+    some SentMsg.rcvrs
+}
+
 run {
     #Member > 3
-    #Leader > 0
+    #lnxt > 1
+    #qnxt > 1
     #Leader.lnxt.Node > 1
-    some LQueue
-    some n: Node | n in (Node-Member)
-    some m: Member | m !in (Leader.lnxt.Node)
+    some SendingMsg
+    some PendingMsg
+    some SentMsg
 } for 12

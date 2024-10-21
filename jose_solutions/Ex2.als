@@ -52,6 +52,12 @@ pred init[] {
     all m: Member |
         m.(^nxt) = Member
     
+    all n: Node |
+        some n.outbox
+    
+    // For all messages msg.sndr = m iff msg in m.outbox
+    all msg: Msg, n: Node |
+        (msg.sndr = n) iff (msg in n.outbox)
     // // TODO: Ask if this is necessary
     // all n1, n2: Node | n1.outbox != n2.outbox
 }
@@ -244,8 +250,7 @@ pred leaderPromotionSingle[mFirst: Member] {
     // mFirst is the first node on LQueue
     mFirst = Leader.~(Leader.lnxt)
     // All messages have been sent
-    no SendingMsg & Leader.outbox
-    no PendingMsg & Leader.outbox
+    no SendingMsg
 
     // Post
     // mFirst is now the Leader
@@ -274,8 +279,8 @@ pred leaderPromotionMultiple[mFirst: Member] {
     mFirst = Leader.~(Leader.lnxt)
 
     // All messages have been sent
-    no SendingMsg & Leader.outbox
-    no PendingMsg & Leader.outbox
+    no SendingMsg
+    // no PendingMsg & Leader.outbox
 
     // Post
 
@@ -436,14 +441,14 @@ pred broadcastInitialisation[msg: PendingMsg] {
     SentMsg' = SentMsg
 }
 
-// Does the message need to be an argument of this predicate?
 pred messageRedirect[m: Member, msg: SendingMsg] {
     // Pre
 
     // m is not the Leader
     m != Leader
-    // m.(~nxt) != Leader
-    // msg is in the outbox of the queue before m
+    // Can't redirect a message to the Leader. That's a case of broadcastTermination
+    m.nxt != Leader
+    // msg is in the outbox of m
     msg in m.outbox
     // Can only redirect messages sent from the Leader
     msg.sndr = Leader
@@ -473,11 +478,15 @@ pred broadcastTerminationAux[msg: SendingMsg, mLast: Member] {
     // Leader has to be the sender of the message
     msg.sndr = Leader
     // mLast is the Member before Leader
-    mLast = Leader.(~nxt)
+    Leader = mLast.nxt
+    // Message has to be present in the outbox of the Member before the Leader
     msg in mLast.outbox
+    mLast in msg.rcvrs
+    msg !in Leader.outbox
 
     // Post
 
+    // Message is now sent
     SentMsg' = SentMsg + msg
     SendingMsg' = SendingMsg - msg
     // Message leaves the Leader's outbox
@@ -544,15 +553,15 @@ fact {
 
 run {
 	eventually (#qnxt > 1)
-} for 7
+}
 
 run {
-    eventually (#qnxt > 3)
-} for 7
+    eventually (#qnxt > 2)
+} for 0 Msg, 4 Node
 
 run memberPromotion {
-    eventually (#Member > 2)
-} for 5
+    eventually (#Member > 4)
+} for 0 Msg, 5 Node
 
 run memberPromotionSingle {
     eventually (some m: Member, nFirst: Node | memberPromotionSingle[m, nFirst])

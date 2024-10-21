@@ -4,56 +4,56 @@ pred fairnessMemberApplication[] {
     all m: Member, n: Node |
         eventually always (n != m && n !in Node.(~(Member.qnxt)) && n !in Member.(^nxt))
             implies
-        always eventually
-            memberApplication[m, n]
+        (always eventually
+            memberApplication[m, n])
 }
 
 pred fairnessMemberPromotion[] {
     all m: Member, nFirst: Node |
         eventually always (nFirst = m.~(m.qnxt))
             implies
-        always eventually
-            memberPromotion[m]
+        (always eventually
+            memberPromotion[m])
 }
 
 pred fairnessLeaderApplication[] {
     all m: Member |
         eventually always (m != Leader && m !in LQueue)
             implies
-        always eventually
-            leaderApplication[m]
+        (always eventually
+            leaderApplication[m])
 }
 
 pred fairnessLeaderPromotion[] {
     all mFirst: Member |
-        eventually always (mFirst = Leader.~(Leader.lnxt) && (no SendingMsg & Leader.outbox) && (no PendingMsg & Leader.outbox))
+        eventually always (mFirst = Leader.~(Leader.lnxt) && (no SendingMsg))
             implies
-        always eventually
-            leaderPromotion[]
+        (always eventually
+            leaderPromotion[])
 }
 
 pred fairnessBroadcastInitialisation[] {
     all msg: PendingMsg |
         eventually always (msg.sndr = Leader && msg in Leader.outbox && Leader.nxt != Leader)
             implies
-        always eventually
-            broadcastInitialisation[msg]
+        (always eventually
+            broadcastInitialisation[msg])
 }
 
 pred fairnessMessageRedirect[] {
     all m: Member, msg: SendingMsg |
-        eventually always (m != Leader && msg in m.outbox && msg.sndr = Leader)
+        eventually always (m != Leader && m.nxt != Leader && msg in m.outbox && msg.sndr = Leader)
             implies
-        always eventually
-            messageRedirect[m, msg]
+        (always eventually
+            messageRedirect[m, msg])
 }
 
 pred fairnessBroadcastTermination[] {
-    all msg: SendingMsg |
-        eventually always (Leader in msg.rcvrs && msg.sndr = Leader && once msg !in Leader.outbox && msg in Leader.outbox)
+    all msg: SendingMsg, mLast: Member |
+        eventually always (msg.sndr = Leader && Leader = mLast.nxt && msg in mLast.outbox)
             implies
-        always eventually
-            broadcastTermination[msg]
+        (always eventually
+            broadcastTermination[msg])
 }
 
 pred fairness[] {
@@ -75,12 +75,15 @@ pred fairness[] {
 pred allBroadcastsTerminate[] {
     Msg = SentMsg
     // all msg: Msg |
+    //     once msg in PendingMsg implies eventually msg in SentMsg
+    // Msg = SentMsg
+    // all msg: Msg |
     //	once msg in SendingMsg implies eventually msg in SentMsg
 }
 
 pred noExits[] {
-    all m: Member, n: Node | nonMemberExit[m, n]
-    all m: Member | memberExit[m]
+    always no m: Member, n: Node | nonMemberExit[m, n]
+    always no m: Member | memberExit[m]
 }
 
 fun visualizeMemberQueues[]: Node->Node {
@@ -96,13 +99,17 @@ run {
 }
 
 run {
-    fairness[] && noExits[] && #Node > 1
+    fairness[] && #Node > 1 && noExits[]
 } for 14 steps
 
-check weakFairness {
+assert weakFairness {
     (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])
 }
 
-check strongFairness {
+assert strongFairness {
     (fairness[] && noExits[] && #Node > 1) implies (eventually allBroadcastsTerminate[])
 }
+
+check weakFairness
+
+check strongFairness

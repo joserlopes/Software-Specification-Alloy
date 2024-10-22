@@ -242,6 +242,11 @@ fact {
         n in (n.outbox).rcvrs
 }
 
+// 6.7 Nodes cannot receive their own message
+fact {
+    all m: SendingMsg |
+        no m.rcvrs & m.sndr
+}
 /*
     7. Sent messages
 */ 
@@ -260,7 +265,8 @@ fact {
 
 // 7.3 Nodes cannot receive their own message (which means that leaders don't receive their own message)
 fact {
-    no Msg.rcvrs & Msg.sndr
+    all m: SentMsg |
+        no m.rcvrs & m.sndr
 }
 
 run network1 {

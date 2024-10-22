@@ -12,11 +12,9 @@
    <type name="String"/>
    <type name="Ex2/Msg"/>
    <type name="seq/Int"/>
+   <set name="$broadcastTermination_mLast" type="Ex2/Node"/>
+   <set name="$msg" type="Ex2/Msg"/>
    <set name="Ex2/LQueue" type="Ex2/Node"/>
-</node>
-
-<node color="Black">
-   <set name="Ex2/SentMsg" type="Ex2/Msg"/>
 </node>
 
 <node color="Blue">
@@ -25,6 +23,10 @@
 
 <node color="Gray">
    <set name="Ex2/PendingMsg" type="Ex2/Msg"/>
+</node>
+
+<node color="Green">
+   <set name="Ex2/SentMsg" type="Ex2/Msg"/>
 </node>
 
 <node color="Red">
@@ -44,6 +46,7 @@
 </node>
 
 <edge visible="no">
+   <relation name="lnxt"> <type name="Ex2/Node"/> <type name="Ex2/Node"/> <type name="Ex2/Node"/> </relation>
    <relation name="qnxt"> <type name="Ex2/Node"/> <type name="Ex2/Node"/> <type name="Ex2/Node"/> </relation>
 </edge>
 

@@ -27,6 +27,11 @@
    <type name="Msg"/>
 </node>
 
+<node showlabel="no">
+   <set name="$First" type="Node"/>
+   <set name="$leaderPromotion_mFirst" type="Node"/>
+</node>
+
 <node showlabel="no" style="Bold" color="Yellow">
    <set name="this/Member" type="Node"/>
 </node>
@@ -37,11 +42,6 @@
 
 <node style="inherit">
    <set name="this/LQueue" type="Node"/>
-</node>
-
-<node visible="no" showlabel="no">
-   <set name="$First" type="Node"/>
-   <set name="$leaderPromotion_mFirst" type="Node"/>
 </node>
 
 <node visible="no" showlabel="no" style="Bold" color="Blue">

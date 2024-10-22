@@ -31,9 +31,10 @@ fact {
     Member = Member.nxt
 }
 
-// 1.2 next cannot be reciprocal
+// 1.2 next cannot be reciprocal 
+// EDIT: next can be reciprocal when there is one member
 fact {
-    no (nxt & ~nxt)
+    // no (nxt & ~nxt)
 }
 
 // 1.3 Every member can reach every other one through nxt (loops)
@@ -88,7 +89,7 @@ fact {
 }
 
 
-fun visualizeMemberQueues[]: Node->Node {
+fun qnxt_viz[]: Node->Node {
     Member.qnxt
 }
 
@@ -150,7 +151,7 @@ fact {
         Leader in m.^(Leader.lnxt)
 }
 
-fun visualizeLeaderQueues[]: Node->Node {
+fun lnxt_viz[]: Node->Node {
     Leader.lnxt
 }
 
@@ -159,7 +160,7 @@ fun visualizeLeaderQueues[]: Node->Node {
 */ 
 
 
-// 4.0 redundant: no messages without status
+// 4.1 No messages without status
 fact {
     all m:Msg |
     m in SentMsg 
@@ -167,19 +168,18 @@ fact {
     || m in PendingMsg
 }
 
-// 4.1 Sent, Sending and Pending are disjoint
+// 4.2 Sent, Sending and Pending are disjoint
 fact {
     disj[SentMsg, SendingMsg, PendingMsg]
 }
 
 
 /*
-    4. Pending messages
+    5. Pending messages
 */ 
 
-// 4.7 Pending messages are in its sender's outbox
+// 5.1 Pending messages are in its sender's outbox
 // i.e. outbox contains own node's pending messages
-
 fact {
     all n: Node, msg: PendingMsg |
         msg in n.outbox 
@@ -187,33 +187,38 @@ fact {
         msg.sndr = n
 }
 
-// 4.11 Pending messages have no receivers
+// 5.2 Pending messages have no receivers
 fact {
     some PendingMsg
     implies 
     no PendingMsg.rcvrs
 }
 
-// 4.2 There can be one or zero sending message at a time
+/*
+    6. Sending messages
+*/ 
+
+// 6.1 There can be one or zero sending message at a time
+// EDIT: there can
 fact {
-    lone SendingMsg
+    // lone SendingMsg
 }
 
-// 4.3 Sending messages have the current Leader as the sender
+// 6.2 Sending messages have the current Leader as the sender
 fact {
     some SendingMsg
     implies
     SendingMsg.sndr = Leader
 }
 
-// 4.4 Sending Messages need to have at least some receiver
+// 6.3 Sending Messages need to have at least some receiver
 fact {
     some SendingMsg
     implies
     some SendingMsg.rcvrs
 }
 
-// 4.5 Sending Messages need to be in one member's outbox
+// 6.4 Sending Messages need to be in one member's outbox
 fact {
     some SendingMsg
     implies
@@ -221,35 +226,39 @@ fact {
         SendingMsg in n.outbox
 }
 
-// 4.8 If node has a Sending message in its outbox, node is a member
+// 6.5 If node has a Sending message in its outbox, node is a member
 fact {
-    all n: Node |
-        SendingMsg in n.outbox
-        implies
+    all n: Node, msg: SendingMsg |
+        msg in n.outbox
+        iff
         n in Member
 }
 
-// 4.9 If node has a Sending message in its outbox, it is in the receivers of the message
+// 6.6 If node has a Sending message in its outbox, it is in the receivers of the message
 fact {
-    all n: Node |
-        SendingMsg in n.outbox
+    all n: Node, msg: SendingMsg |
+        msg in n.outbox
         implies
         n in (n.outbox).rcvrs
 }
 
-// 4.6 Outbox contains no sent messages
+/*
+    7. Sent messages
+*/ 
+
+// 7.1 Outbox contains no sent messages
 fact {
     no Node.outbox & SentMsg
 }
 
-// 4.12 Sent messages have receivers
+// 7.2 Sent messages have receivers
 fact {
     some SentMsg
     implies
     some SentMsg.rcvrs
 }
 
-// 4.10 Nodes cannot receive their own message (which means that leaders don't receive their own message)
+// 7.3 Nodes cannot receive their own message (which means that leaders don't receive their own message)
 fact {
     no Msg.rcvrs & Msg.sndr
 }

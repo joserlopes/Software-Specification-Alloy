@@ -489,7 +489,7 @@ pred broadcastTerminationAux[msg: SendingMsg, mLast: Member] {
     // Message is now sent
     SentMsg' = SentMsg + msg
     SendingMsg' = SendingMsg - msg
-    // Message leaves the Leader's outbox
+    // Message leaves the mLast's outbox
     outbox' = outbox - (mLast->msg)
 
     // Frame

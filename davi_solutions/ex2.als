@@ -628,7 +628,7 @@ pred validMsgs[]{
     // Include all message-specific validations
     validPendingMsg[]
     validSendingMsg[]
-    // validSentMsg[]
+    validSentMsg[]
 }
 
 pred validPendingMsg[]{
@@ -679,7 +679,13 @@ pred validSendingMsg[] {
         msg in n.outbox
         implies
         n in (n.outbox).rcvrs
+
+
+    // 6.7 Nodes cannot receive their own message
+    all m: SendingMsg |
+        no m.rcvrs & m.sndr
 }
+        
 
 pred validSentMsg[] {
     // 7.1 Outbox contains no sent messages
@@ -690,8 +696,9 @@ pred validSentMsg[] {
     implies
     some SentMsg.rcvrs
 
-    // 7.3 Nodes cannot receive their own message
-    no Msg.rcvrs & Msg.sndr
+    // // 7.3 Nodes cannot receive their own message
+    all m: SentMsg |
+        no m.rcvrs & m.sndr
 }
 
 

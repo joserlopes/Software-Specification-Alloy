@@ -31,6 +31,10 @@ fact {
     always no (PendingMsg & (SentMsg + SendingMsg))
 }
 
+/*
+    Init
+*/
+
 pred init[] {
     // Only the leader is present
     one nxt
@@ -61,6 +65,10 @@ pred init[] {
     // // TODO: Ask if this is necessary
     // all n1, n2: Node | n1.outbox != n2.outbox
 }
+
+/*
+    Stutter
+*/
 
 pred stutter[] {
     // Nothing changes
@@ -93,6 +101,10 @@ pred stutterMessages[] {
     SendingMsg' = SendingMsg
     PendingMsg' = PendingMsg
 }
+
+/*
+    State transformers
+*/
 
 pred memberApplicationAux[m: Member, n: Node, nLast: Node] {
     // Pre
@@ -538,6 +550,11 @@ pred trans[] {
     ||
     some msg: SendingMsg | broadcastTermination[msg]
 }
+
+
+/*
+    System
+*/
 
 pred system[] {
     init[]

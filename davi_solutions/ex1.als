@@ -228,13 +228,13 @@ fact {
 
 // 6.5 If node has a Sending message in its outbox, node is a member
 fact {
-    all n: Node, msg: SendingMsg |
-        msg in n.outbox
-        iff
+    all n: Node, msg: Msg |
+        msg in SendingMsg and msg in n.outbox
+        implies
         n in Member
 }
 
-// 6.6 If node has a Sending message in its outbox, it is in the receivers of the message
+// // 6.6 If node has a Sending message in its outbox, it is in the receivers of the message
 fact {
     all n: Node, msg: SendingMsg |
         msg in n.outbox
@@ -276,7 +276,7 @@ run network1 {
     some SendingMsg
     some PendingMsg
     some SentMsg
-} for 5
+} for 10
 
 run network2 {
     #Node >= 5

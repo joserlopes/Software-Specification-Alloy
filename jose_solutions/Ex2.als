@@ -331,9 +331,9 @@ pred leaderPromotionAux[mFirst: Member] {
     leaderPromotionMultiple[mFirst]
 }
 
-pred leaderPromotion[] {
-    some mFirst: Member | leaderPromotionAux[mFirst]
-}
+// pred leaderPromotion[] {
+//     some mFirst: Member | leaderPromotionAux[mFirst]
+// }
 
 pred nonMemberExitTail[m: Member, n: Node] {
     // Pre
@@ -538,7 +538,7 @@ pred trans[] {
     ||
     some m: Member | leaderApplication[m]
     ||
-    leaderPromotion[]
+    some mFirst: Member | leaderPromotionAux[mFirst]
     ||
     some m: Member, n: Node | nonMemberExit[m, n]
     ||
@@ -580,15 +580,16 @@ fact {
 
 run {
 	eventually (#qnxt > 1)
-}
+} for 3 steps
 
 run {
-    eventually (#qnxt > 2)
-} for 0 Msg, 4 Node
+    eventually (#qnxt = 2)
+} for 3
 
-run memberPromotion {
-    eventually (#Member > 4)
-} for 0 Msg, 5 Node
+run {
+    eventually (#Member > 2)
+} for 3
+
 
 run memberPromotionSingle {
     eventually (some m: Member, nFirst: Node | memberPromotionSingle[m, nFirst])
@@ -602,7 +603,7 @@ run nonMemberExitAndLeaderPromotion {
     eventually #qnxt > 1
     eventually #lnxt > 1
     eventually some m: Member, n: Node | nonMemberExit[m, n]
-    eventually leaderPromotion[]
+    eventually some m: Member | leaderPromotionAux[m]
 } for 7
 
 run nonMemberExit {
@@ -618,7 +619,7 @@ run memberExit {
 } 
 
 run leaderPromotion {
-    eventually leaderPromotion[]
+    eventually some m: Member | leaderPromotionAux[m]
 }
 
 run leaderPromotionMultiple {
@@ -640,15 +641,18 @@ run messageRedirect {
 run broadcastTermination1 {
     (eventually some SentMsg)
 }
+run broadcastTerminaion2 {
+    eventually some msg: SendingMsg | broadcastTermination[msg]
+}
 
 run broadcastTermination2 {
-    eventually (leaderPromotion[] && some SentMsg)
+        eventually some m: Member | leaderPromotionAux[m] && some SentMsg
 }
 
 run trace1 {
     #Node > 4
     eventually #Member > 1
-    eventually leaderPromotion[]
+    eventually some m: Member | leaderPromotionAux[m]
     // eventually some m: Member | memberPromotion[m]
     eventually some m: Member | memberExit[m]
     eventually some m: Member, n: Node | nonMemberExit[m, n]
@@ -658,13 +662,13 @@ run trace1 {
 run trace2 {
     eventually #lnxt > 1
     eventually #qnxt > 1
-    eventually leaderPromotion[]
+    eventually some m: Member | leaderPromotionAux[m]
 }
 
 run teste1 {
     // eventually #Member > 2
     #Node > 4
-    eventually leaderPromotion[]
+    eventually some m: Member | leaderPromotionAux[m]
     eventually some m: Member | memberExit[m]
     eventually some m: Member, n: Node | nonMemberExit[m, n]
     eventually some SentMsg

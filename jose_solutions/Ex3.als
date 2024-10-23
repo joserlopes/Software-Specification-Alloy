@@ -211,10 +211,10 @@ pred fairnessLeaderApplication[] {
 
 pred fairnessLeaderPromotion[] {
     all mFirst: Node |
-        eventually always (mFirst in Member && mFirst = Leader.~(Leader.lnxt) && no (sndr.Leader & PendingMsg) && no SendingMsg)
+        eventually always (mFirst in Member && mFirst = Leader.~(Leader.lnxt) && no (sndr.Leader & PendingMsg) && no SendingMsg && PendingMsg != none)
             implies
         (always eventually
-            leaderPromotion[])
+            leaderPromotionAux[mFirst])
 }
 
 pred fairnessBroadcastInitialisation[] {
@@ -243,17 +243,11 @@ pred fairnessBroadcastTermination[] {
 
 pred fairness[] {
     fairnessMemberApplication[]
-    &&
     fairnessMemberPromotion[]
-    &&
     fairnessLeaderApplication[]
-    &&
     fairnessLeaderPromotion[]
-    &&
     fairnessBroadcastInitialisation[]
-    &&
     fairnessMessageRedirect[]
-    &&
     fairnessBroadcastTermination[]
 }
 
@@ -282,7 +276,7 @@ run {
 
 run {
     fairness[] && noExits[] && #Node > 1
-} for 20 steps
+} for 6..12 steps
 
 assert weakFairness {
     (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])

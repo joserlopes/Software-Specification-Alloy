@@ -243,17 +243,11 @@ pred fairnessBroadcastTermination[] {
 
 pred fairness[] {
     fairnessMemberApplication[]
-    &&
     fairnessMemberPromotion[]
-    &&
     fairnessLeaderApplication[]
-    &&
     fairnessLeaderPromotion[]
-    &&
     fairnessBroadcastInitialisation[]
-    &&
     fairnessMessageRedirect[]
-    &&
     fairnessBroadcastTermination[]
 }
 

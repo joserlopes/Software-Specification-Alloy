@@ -208,14 +208,6 @@ pred memberPromotionMultiple[m: Member, nFirst: Node] {
 }
 
 // n is the node to be inserted on the ring coming from m's qnxt queue
-pred memberPromotionAux[m: Member] {
-    some nFirst: Node | (
-        memberPromotionSingle[m, nFirst]
-        ||
-        memberPromotionMultiple[m, nFirst]
-    )
-}
-
 pred memberPromotionAux[m: Member, nFirst: Node] {
     memberPromotionSingle[m, nFirst]
     ||
@@ -339,7 +331,7 @@ pred nonMemberExitTail[m: Member, n: Node] {
     // Pre
 
     // m has exactly one node on it's qnxt queue
-    some m.qnxt
+    one m.qnxt
     // n has to be a member of m's qnxt queue
     n in Node.(~(m.qnxt))
     // No other node can be pointing to n (n is the last element of m's qnxt queue)
@@ -367,11 +359,11 @@ pred nonMemberExitTail[m: Member, n: Node] {
 pred nonMemberExitNotTail[m: Member, n: Node] {
     // Pre
 
-    // m has exactly one node on it's qnxt queue
+    // m has more than one node on it's qnxt queue
     one n.~(m.qnxt)
     // n has to be a member of m's qnxt queue
     n in Node.(~(m.qnxt))
-    // Some other node on m'x qnxt queue must be poiting to n
+    // Some other node on m's qnxt queue must be poiting to n
     some (m.qnxt).n
     // n can't be part of the Member ring
     n !in Member.(^nxt)
@@ -404,8 +396,8 @@ pred memberExitAux[m: Member, beforeM: Member] {
 
     // m is not in the LQueue
     m !in LQueue
-    // m has no Nodes in it's lnxt queue
-    no m.lnxt
+    // m has no Nodes in it's qnxt queue
+    no m.qnxt
     m = beforeM.nxt
     // All m's messages are sent
     no (sndr.m & PendingMsg)
@@ -570,80 +562,13 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
-// fun First[]: Node {
-//     Member.~(Member.qnxt)
-// }
-
 fact {
     system[]
 }
 
-run {
-	eventually (#qnxt > 1)
-}
-
-run {
-    eventually (#qnxt > 2)
-} for 0 Msg, 4 Node
-
-run memberPromotion {
-    eventually (#Member > 4)
-}
-
-run memberPromotionSingle {
-    eventually (some m: Member, nFirst: Node | memberPromotionSingle[m, nFirst])
-} for 6
-
-run memberPromotionMultiple {
-    eventually (some m: Member, nFirst: Node | memberPromotionMultiple[m, nFirst])
-} for 6
-
-run nonMemberExitAndLeaderPromotion {
-    eventually #qnxt > 1
-    eventually #lnxt > 1
-    eventually some m: Member, n: Node | nonMemberExit[m, n]
-    eventually leaderPromotion[]
-} for 7
-
-run nonMemberExit {
-    eventually some m: Member, n: Node | nonMemberExit[m, n]
-}
-
-run nonMemberExitNotTail {
-    eventually some m: Member, n: Node | nonMemberExitNotTail[m, n]
-} for 7
-
-run memberExit {
-    eventually some m: Member | memberExit[m]
-} 
-
-run leaderPromotion {
-    eventually leaderPromotion[]
-}
-
-run leaderPromotionMultiple {
-    eventually some mFirst: Member | leaderPromotionMultiple[mFirst]
-}
-
-run leaderApplication {
-    eventually (some m: Member | leaderApplication[m])
-}
-
-run broadcastInitialisation {
-    eventually some msg: PendingMsg | broadcastInitialisation[msg]
-}
-
-run messageRedirect {
-    eventually some m: Member, msg: SendingMsg | messageRedirect[m, msg]
-}
-
-run broadcastTermination1 {
-    (eventually some SentMsg)
-}
-
-run broadcastTermination2 {
-    eventually (leaderPromotion[] && some SentMsg)
-}
+/*
+    Run commands
+*/
 
 // Command used to generate the first trace
 run trace1 {
@@ -664,16 +589,3 @@ run trace2 {
     eventually some m: Member, n: Node | nonMemberExit[m, n]
     eventually some SentMsg
 } for 5 Msg, 5 Node, 12 steps
-
-run teste1 {
-    // eventually #Member > 2
-    #Node > 4
-    eventually leaderPromotion[]
-    eventually some m: Member | memberExit[m]
-    eventually some m: Member, n: Node | nonMemberExit[m, n]
-    eventually some SentMsg
-} for 5
-
-run teste2 {
-    eventually #Member > 4
-} for 2 Msg, 5 Node, 18 steps

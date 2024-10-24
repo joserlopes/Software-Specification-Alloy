@@ -570,9 +570,9 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
-fun First[]: Node {
-    Member.~(Member.qnxt)
-}
+// fun First[]: Node {
+//     Member.~(Member.qnxt)
+// }
 
 fact {
     system[]
@@ -588,7 +588,7 @@ run {
 
 run memberPromotion {
     eventually (#Member > 4)
-} for 0 Msg, 5 Node
+}
 
 run memberPromotionSingle {
     eventually (some m: Member, nFirst: Node | memberPromotionSingle[m, nFirst])
@@ -645,21 +645,25 @@ run broadcastTermination2 {
     eventually (leaderPromotion[] && some SentMsg)
 }
 
+// Command used to generate the first trace
 run trace1 {
     #Node > 4
     eventually #Member > 1
     eventually leaderPromotion[]
-    // eventually some m: Member | memberPromotion[m]
     eventually some m: Member | memberExit[m]
     eventually some m: Member, n: Node | nonMemberExit[m, n]
     eventually some SentMsg
 } for 5
 
+// Command used to generate the second trace
 run trace2 {
-    eventually #lnxt > 1
-    eventually #qnxt > 1
+    #Node > 4
+    eventually #Member > 2
     eventually leaderPromotion[]
-}
+    eventually some m: Member | memberExit[m]
+    eventually some m: Member, n: Node | nonMemberExit[m, n]
+    eventually some SentMsg
+} for 5 Msg, 5 Node, 12 steps
 
 run teste1 {
     // eventually #Member > 2

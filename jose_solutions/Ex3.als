@@ -211,7 +211,7 @@ pred fairnessLeaderApplication[] {
 
 pred fairnessLeaderPromotion[] {
     all mFirst: Node |
-        eventually always (mFirst in Member && mFirst = Leader.~(Leader.lnxt) && no (sndr.Leader & PendingMsg) && no SendingMsg)
+        eventually always ((mFirst in Member) && (mFirst = Leader.~(Leader.lnxt)) && (no (sndr.Leader & PendingMsg)) && (no SendingMsg))
             implies
         (always eventually
             leaderPromotion[])

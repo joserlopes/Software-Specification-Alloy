@@ -1,0 +1,2 @@
+- Traces of runs from Ex2
+- Trace for Ex3.4

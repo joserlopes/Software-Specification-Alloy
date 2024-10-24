@@ -203,7 +203,7 @@ pred fairnessMemberPromotion[] {
 
 pred fairnessLeaderApplication[] {
     all m: Node |
-        eventually always (m in Member && m != Leader && m !in LQueue)
+        eventually always (m in Member && m != Leader && m !in LQueue && (some (m.~sndr & PendingMsg)))
             implies
         (always eventually
             leaderApplication[m])
@@ -244,9 +244,9 @@ pred fairnessBroadcastTermination[] {
 pred fairness[] {
     fairnessMemberApplication[]
     fairnessMemberPromotion[]
-    fairnessLeaderApplication[]
+    fairnessLeaderApplication[] // 
     fairnessLeaderPromotion[]
-    fairnessBroadcastInitialisation[]
+    fairnessBroadcastInitialisation[] //
     fairnessMessageRedirect[]
     fairnessBroadcastTermination[]
 }
@@ -270,13 +270,37 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
+
+run {
+    some msg1, msg2 : Msg |
+        (msg1.sndr != msg2.sndr
+        &&
+        eventually(
+            #Member > 2 
+            &&
+            broadcastInitialisation[msg1]
+            && 
+            (eventually broadcastInitialisation[msg2] && #Member > 2 && allBroadcastsTerminate[])
+            
+            )
+        )
+} for 25..35 steps
+
+
+run {
+  eventually ((#Member > 2) && (allBroadcastsTerminate[] ))
+} for 12..20 steps
+
+
 run {
     fairness[] && #Node > 1
 }
 
 run {
-    fairness[] && noExits[] && #Node > 1
-} for 20 steps
+    fairness[] 
+    && noExits[]
+    && (eventually #Member > 2)
+} for exactly 16 steps
 
 assert weakFairness {
     (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])

@@ -429,9 +429,11 @@ pred memberExit[m: Member] {
     some beforeM: Member | memberExitAux[m, beforeM]
 }
 
-pred broadcastInitialisation[msg: PendingMsg] {
+pred broadcastInitialisation[msg: Msg] {
     // Pre
 
+    // msg in PendingMsg
+    msg in PendingMsg
     // Only the Leader can initialize the broadcast
     msg.sndr = Leader
     // Can only send messages from the outbox
@@ -524,23 +526,23 @@ pred broadcastTermination[msg: SendingMsg] {
 pred trans[] {
     stutter[]
     ||
-    some m: Member, n: Node | memberApplication[m, n]
+    (some m: Member, n: Node | memberApplication[m, n])
     ||
-    some m: Member | memberPromotion[m]
+    (some m: Member | memberPromotion[m])
     ||
-    some m: Member | leaderApplication[m]
+    (some m: Member | leaderApplication[m])
     ||
-    leaderPromotion[]
+    (leaderPromotion[])
     ||
-    some m: Member, n: Node | nonMemberExit[m, n]
+    (some m: Member, n: Node | nonMemberExit[m, n])
     ||
-    some m: Member | memberExit[m]
+    (some m: Member | memberExit[m])
     ||
-    some msg: PendingMsg | broadcastInitialisation[msg]
+    (some msg: PendingMsg | broadcastInitialisation[msg])
     ||
-    some m: Member, msg: SendingMsg | messageRedirect[m, msg]
+    (some m: Member, msg: SendingMsg | messageRedirect[m, msg])
     ||
-    some msg: SendingMsg | broadcastTermination[msg]
+    (some msg: SendingMsg | broadcastTermination[msg])
 }
 
 
@@ -589,3 +591,7 @@ run trace2 {
     eventually some m: Member, n: Node | nonMemberExit[m, n]
     eventually some SentMsg
 } for 5 Msg, 5 Node, 12 steps
+
+run{
+    eventually leaderPromotion[]
+}

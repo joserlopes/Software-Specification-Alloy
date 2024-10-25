@@ -178,7 +178,7 @@ assert validSystem {
     always validMsgs[]
 }
 
-check validSystem for 3 Node, 3 Msg
+check validSystem
 
 /*
     Fairness predicates
@@ -244,17 +244,15 @@ pred fairnessBroadcastTermination[] {
 pred fairness[] {
     fairnessMemberApplication[]
     fairnessMemberPromotion[]
-    fairnessLeaderApplication[] // 
+    fairnessLeaderApplication[]
     fairnessLeaderPromotion[]
-    fairnessBroadcastInitialisation[] //
+    fairnessBroadcastInitialisation[]
     fairnessMessageRedirect[]
     fairnessBroadcastTermination[]
 }
 
 pred allBroadcastsTerminate[] {
     Msg = SentMsg
-    // all msg: Msg |
-    //     once msg in PendingMsg implies eventually msg in SentMsg
 }
 
 pred noExits[] {
@@ -269,38 +267,6 @@ fun visualizeMemberQueues[]: Node->Node {
 fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
-
-
-run {
-    some msg1, msg2 : Msg |
-        (msg1.sndr != msg2.sndr
-        &&
-        eventually(
-            #Member > 2 
-            &&
-            broadcastInitialisation[msg1]
-            && 
-            (eventually broadcastInitialisation[msg2] && #Member > 2 && allBroadcastsTerminate[])
-            
-            )
-        )
-} for 25..35 steps
-
-
-run {
-  eventually ((#Member > 2) && (allBroadcastsTerminate[] ))
-} for 12..20 steps
-
-
-run {
-    fairness[] && #Node > 1
-}
-
-run {
-    fairness[] 
-    && noExits[]
-    && (eventually #Member > 2)
-} for exactly 16 steps
 
 assert weakFairness {
     (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])

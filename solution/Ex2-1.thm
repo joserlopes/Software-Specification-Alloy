@@ -29,9 +29,9 @@
 
 <node showlabel="no">
    <set name="$memberExit_beforeM" type="Node"/>
-   <set name="$trace2_m" type="Node"/>
-   <set name="$trace2_m&apos;" type="Node"/>
-   <set name="$trace2_n" type="Node"/>
+   <set name="$trace1_m" type="Node"/>
+   <set name="$trace1_m&apos;" type="Node"/>
+   <set name="$trace1_n" type="Node"/>
 </node>
 
 <node showlabel="no" style="Bold" color="Yellow">

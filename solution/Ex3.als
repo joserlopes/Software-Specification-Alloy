@@ -178,7 +178,7 @@ assert valid {
     always validMsgs[]
 }
 
-// No counterexample found. Assertion may be valid. 25185ms.
+// No counterexample found. Assertion may be valid.
 check valid
 
 /*
@@ -245,9 +245,9 @@ pred fairnessBroadcastTermination[] {
 pred fairness[] {
     fairnessMemberApplication[]
     fairnessMemberPromotion[]
-    fairnessLeaderApplication[] // 
+    fairnessLeaderApplication[]
     fairnessLeaderPromotion[]
-    fairnessBroadcastInitialisation[] //
+    fairnessBroadcastInitialisation[]
     fairnessMessageRedirect[]
     fairnessBroadcastTermination[]
 }
@@ -269,15 +269,21 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
+// This command is used to prove that the right side of the implication below is actually true, which means that the
+// assert is not just trivially true
+run {
+    fairness[] && noExits[] && #Node > 1
+}
+
 // With at least two nodes, under fairness conditions and if no exit operations then all message broadcasts terminate
-// No counterexample found. Assertion may be valid. 7391ms.
+// No counterexample found. Assertion may be valid.
 assert strongFairness {
     (fairness[] && noExits[] && #Node > 1) implies (eventually allBroadcastsTerminate[])
 }
 check strongFairness
 
-
-//In a network with at least two nodes, under fairness conditions, all message broadcasts terminate.
+// In a network with at least two nodes, under fairness conditions, all message broadcasts terminate.
+// The corresponding theme for the counterexample is located in Ex2-2.thm.
 // Counterexample found. Assertion is invalid. 6ms.s
 assert weakFairness {
     (fairness[] && #Node > 1) implies (eventually allBroadcastsTerminate[])

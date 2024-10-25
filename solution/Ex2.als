@@ -572,7 +572,7 @@ fact {
     Run commands
 */
 
-// Command used to generate the first trace
+// Command used to generate the first trace. The corresponding theme is located in Ex2-1.thm
 run trace1 {
     #Node > 4
     eventually #Member > 1
@@ -582,7 +582,7 @@ run trace1 {
     eventually some SentMsg
 } for 5
 
-// Command used to generate the second trace
+// Command used to generate the second trace. The corresponding theme is located in Ex2-2.thm
 run trace2 {
     #Node > 4
     eventually #Member > 2

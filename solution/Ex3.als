@@ -269,8 +269,8 @@ fun visualizeLeaderQueues[]: Node->Node {
     Leader.lnxt
 }
 
-// This command is used to prove that the right side of the implication below is actually true, which means that the
-// assert is not just trivially true
+// This command is used to prove that the left side of the implication below is actually true, which means that the
+// assert is not just trivially valid (Glucose41 solver)
 run {
     fairness[] && noExits[] && #Node > 1
 }

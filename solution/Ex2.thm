@@ -28,10 +28,10 @@
 </node>
 
 <node showlabel="no">
+   <set name="$m" type="Node"/>
+   <set name="$m&apos;" type="Node"/>
    <set name="$memberExit_beforeM" type="Node"/>
-   <set name="$trace1_m" type="Node"/>
-   <set name="$trace1_m&apos;" type="Node"/>
-   <set name="$trace1_n" type="Node"/>
+   <set name="$n" type="Node"/>
 </node>
 
 <node showlabel="no" style="Bold" color="Yellow">

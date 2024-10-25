@@ -572,7 +572,7 @@ fact {
     Run commands
 */
 
-// Command used to generate the first trace. The corresponding theme is located in Ex2-1.thm
+// Command used to generate the first trace. The corresponding theme is located in Ex2-1.thm (Glucose41 solver)
 run trace1 {
     #Node > 4
     eventually #Member > 1
@@ -582,7 +582,7 @@ run trace1 {
     eventually some SentMsg
 } for 5
 
-// Command used to generate the second trace. The corresponding theme is located in Ex2-2.thm
+// Command used to generate the second trace. The corresponding theme is located in Ex2-2.thm (Glucose41 solver)
 run trace2 {
     #Node > 4
     eventually #Member > 2

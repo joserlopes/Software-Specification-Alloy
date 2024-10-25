@@ -269,7 +269,7 @@ fact {
         no m.rcvrs & m.sndr
 }
 
-// Command used to generate the first example of the static model
+// Command used to generate the first example of the static model (minisat solver)
 run network1 {
     #Node >= 5
     #LQueue > 1
@@ -279,7 +279,7 @@ run network1 {
     some SentMsg
 } for 5 Node, 3 Msg
 
-// Command used to generate the second example of the static model
+// Command used to generate the second example of the static model (minisat solver)
 run network2 {
     #Node >= 5
     #Leader.lnxt > 1
